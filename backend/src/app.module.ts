@@ -6,7 +6,8 @@ import { UserModule } from "./user/user.module";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuthModule } from "./auth/auth.module";
 import { AuthGuard } from "./auth/auth.guard";
-import { TopicModule } from './topic/topic.module';
+import { TopicModule } from "./topic/topic.module";
+import { GatewayModule } from "./gateway/gateway.module";
 
 @Module({
   imports: [
@@ -15,10 +16,13 @@ import { TopicModule } from './topic/topic.module';
       isGlobal: true,
     }),
     MongooseModule.forRootAsync({
-      useFactory: async () => ({
-        uri: process.env.MONGO_URL,
-      }),
+      useFactory: async () => {
+        return {
+          uri: process.env.MONGO_URI,
+        };
+      },
     }),
+    GatewayModule,
     AuthModule,
     UserModule,
     TopicModule,
