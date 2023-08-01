@@ -1,5 +1,7 @@
+import AuthProvider from "@/providers/Auth";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
   title: "Login - Notify",
@@ -9,9 +11,5 @@ export const metadata: Metadata = {
 const inter = Inter({ subsets: ["latin"] });
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="pt-BR">
-      <body className={inter.className}>{children}</body>
-    </html>
-  );
+  return children;
 }

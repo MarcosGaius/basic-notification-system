@@ -9,11 +9,16 @@ import {
 } from "@nestjs/websockets";
 import { Socket, Server } from "socket.io";
 import * as amqp from "amqplib";
-import { UserService } from "src/user/user.service";
 import { JwtService } from "@nestjs/jwt";
 import { Types } from "mongoose";
+import { UserService } from "src/user/user.service";
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: process.env.CORS_ORIGIN,
+    credentials: true,
+  },
+})
 export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private topicConnections = new Map<string, Set<Socket>>();
   private rabbitMQChannel: amqp.Channel;

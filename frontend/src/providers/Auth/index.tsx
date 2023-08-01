@@ -2,38 +2,40 @@
 
 import { IUserData } from "@/types/user.types";
 import { useRouter } from "next/navigation";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { NotificationContext } from "../Notification";
 
 interface IAuthContext {
-  setUser: React.Dispatch<React.SetStateAction<IUserData | null>>;
-  user: IUserData | null;
+  setUser: React.Dispatch<React.SetStateAction<{ user: IUserData; access_token: string } | null>>;
+  user: { user: IUserData; access_token: string } | null;
   logout: (message?: string) => void;
-  login: (data: { email: string; pwd: string }) => Promise<unknown>;
+  login: (data: { user: IUserData; access_token: string }) => void;
+  isTokenExpired: (token: string) => boolean;
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const AuthContext = createContext({} as IAuthContext);
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<IUserData | null>(null);
+  const [user, setUser] = useState<{ user: IUserData; access_token: string } | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const router = useRouter();
 
-  const login = (data: { email: string; pwd: string }) => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const user = { id: 1, name: "John Doe" };
-        // setUser(user);
-        localStorage.setItem("user", JSON.stringify(user));
-        resolve(user);
-      }, 1000);
-    });
+  const login = (data: { user: IUserData; access_token: string }) => {
+    setUser(data);
+    localStorage.setItem("notify@user", JSON.stringify(data));
+    router.push("/");
+    toast.success("Login bem-sucedido. Bem-vindo!");
   };
 
   const logout = (message?: string) => {
     setUser(null);
-    localStorage.removeItem("user");
+    localStorage.removeItem("notify@user");
     router.push("/login");
+    if (message) toast(message, { icon: "❗" });
   };
 
   const isTokenExpired = (token: string) => {
@@ -46,17 +48,23 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   };
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+    const storedUser = JSON.parse(localStorage.getItem("notify@user") || "{}");
 
-    if (storedUser && storedUser.token) {
-      if (!isTokenExpired(storedUser.token)) {
+    if (storedUser && storedUser.access_token) {
+      if (!isTokenExpired(storedUser.access_token)) {
         setUser(storedUser);
-      } else {
-        logout();
+      } else if (storedUser) {
+        logout("Sessão expirada. Logue novamente");
       }
     }
     setIsLoading(false);
-  }, []);
+  }, [router]);
 
-  return <AuthContext.Provider value={{ setUser, user, logout, login }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ setUser, user, logout, login, isTokenExpired, isLoading, setIsLoading }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }

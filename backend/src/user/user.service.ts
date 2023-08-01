@@ -39,7 +39,7 @@ export class UserService {
 
   async subscribeUserToTopic(userId: string, topicId: string): Promise<UserDocument> {
     const { subscribed_topics } = await this.userModel.findById(userId).select("subscribed_topics");
-    if (subscribed_topics.length || subscribed_topics.includes(new Types.ObjectId(userId)))
+    if (subscribed_topics.length && subscribed_topics.some((id) => id.toString() === topicId))
       throw new BadRequestException("Usuário já inscrito no tópico");
 
     const topic = await this.topicModel.findById(topicId);
@@ -60,5 +60,18 @@ export class UserService {
       },
       { new: true }
     );
+  }
+
+  async getUserNofications(userId: string) {
+    const user = await this.userModel.findById(userId).populate("subscribed_topics");
+
+    const subscribedTopics = user.subscribed_topics;
+
+    const messages = await this.topicModel
+      .find({ _id: { $in: subscribedTopics } })
+      .select("messages")
+      .sort("-messages.createdAt");
+
+    return messages;
   }
 }

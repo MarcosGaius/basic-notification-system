@@ -1,10 +1,15 @@
-import { BadRequestException, NotFoundException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  NotFoundException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Topic, TopicDocument } from "./topic.model";
 import { CreateTopicDto, SendMessageDto } from "./topic.dto";
 import { Model } from "mongoose";
-import { User, UserDocument } from "src/user/user.model";
 import * as amqp from "amqplib";
+import { User, UserDocument } from "src/user/user.model";
 
 @Injectable()
 export class TopicService {
@@ -48,9 +53,18 @@ export class TopicService {
     const topic = await this.topicModel.findById(topicId);
     if (!topic) throw new NotFoundException("Tópico não encontrado");
 
-    const sender = (await this.userModel.findById(userId)).toJSON();
+    let sender = await this.userModel.findById(userId);
 
-    const newMessage = { sender, content: message, createdAt: new Date() };
+    if (!sender) throw new UnauthorizedException("Usuário não identificado.");
+
+    sender = sender.toJSON();
+
+    if (!sender.subscribed_topics.some((topic) => topic._id.toString() === topicId))
+      throw new BadRequestException(
+        "Você não pode enviar notificações para tópicos que não está inscrito"
+      );
+
+    const newMessage = { sender: sender, content: message, createdAt: new Date() };
 
     await this.rabbitMQChannel.assertExchange(this.EXCHANGE, "topic", { durable: false });
     this.rabbitMQChannel.publish(
@@ -64,5 +78,9 @@ export class TopicService {
       { $addToSet: { messages: newMessage } },
       { new: true }
     );
+  }
+
+  async listAllTopics(): Promise<TopicDocument[]> {
+    return this.topicModel.find().select("name");
   }
 }

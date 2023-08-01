@@ -22,7 +22,7 @@ export class User {
   @Prop()
   password: string;
 
-  @Prop({ default: [] })
+  @Prop({ default: [], ref: "Topic" })
   subscribed_topics: Types.ObjectId[];
 
   @Prop({ default: now })
