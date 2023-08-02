@@ -16,6 +16,7 @@ import { createTopic } from "@/services/topic.service";
 import { AxiosError } from "axios";
 import { toast } from "react-hot-toast";
 import { TopicContext } from "@/providers/Topic";
+import { NotificationContext } from "@/providers/Notification";
 
 interface ITopicDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ interface ITopicDialogProps {
 
 const TopicDialog = ({ open, setOpen }: ITopicDialogProps) => {
   const { setTopics } = useContext(TopicContext);
+  const { subscribeToSocket } = useContext(NotificationContext);
   const [topicName, setTopicName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -35,6 +37,7 @@ const TopicDialog = ({ open, setOpen }: ITopicDialogProps) => {
 
       if (newTopic.data) {
         setTopics((prevTopics) => [newTopic.data, ...prevTopics]);
+        subscribeToSocket();
 
         onClose();
         toast.success("Sucesso: tópico criado!");

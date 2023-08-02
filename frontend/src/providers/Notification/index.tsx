@@ -18,7 +18,7 @@ interface INotificationContext {
 export const NotificationContext = createContext({} as INotificationContext);
 
 export default function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { isTokenExpired, logout, user } = useContext(AuthContext);
+  const { isTokenExpired, logout, user, isLoading: isLoadingAuth } = useContext(AuthContext);
 
   const [notifications, setNotifications] = useState<INotification[] | []>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -63,7 +63,7 @@ export default function NotificationProvider({ children }: { children: React.Rea
     } catch (error) {
       toast.error("Houve um problema ao conectar ao servidor de notificações");
     }
-  }, [socket, user]);
+  }, [socket, user, isLoadingAuth]);
 
   useEffect(() => {
     if (!user) return;
