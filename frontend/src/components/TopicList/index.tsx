@@ -2,6 +2,7 @@
 
 import { AuthContext } from "@/providers/Auth";
 import { TopicContext } from "@/providers/Topic";
+import { NotificationContext } from "@/providers/Notification";
 import { subscribeToTopic } from "@/services/topic.service";
 import {
   Button,
@@ -25,6 +26,7 @@ const cellStyles = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
 export default function TopicList() {
   const { topics, isLoading } = useContext(TopicContext);
   const { user } = useContext(AuthContext);
+  const { subscribeToSocket } = useContext(NotificationContext);
 
   const [isLoadingSubscribe, setIsLoadingSubscribe] = useState(false);
 
@@ -36,6 +38,7 @@ export default function TopicList() {
 
       if (response.status === 200) {
         toast.success("Sucesso: Inscrito no tópico!");
+        subscribeToSocket();
       }
     } catch (error) {
       let message = "Erro: Houve um erro ao inscrever-se. Tente novamente.";
